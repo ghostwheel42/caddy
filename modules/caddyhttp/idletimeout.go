@@ -16,8 +16,10 @@ package caddyhttp
 
 import (
 	"context"
+	"errors"
 	"io"
 	"net/http"
+	"os"
 	"sync"
 	"time"
 
@@ -172,7 +174,8 @@ func (r *IdleTimeoutReader) Read(p []byte) (int, error) {
 	r.Deadline.transferred += int64(n)
 	if err != nil {
 		r.terminalErr = err
-		if !r.finished {
+		// keep an expired deadline, net/http drains an unfinished body on Close and must not block on a client that stopped sending
+		if !r.finished && !errors.Is(err, os.ErrDeadlineExceeded) {
 			r.clearDeadlineLocked()
 		}
 	} else if r.ClearBetweenReads && !r.finished {
