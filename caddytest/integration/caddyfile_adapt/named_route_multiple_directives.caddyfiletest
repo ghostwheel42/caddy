@@ -1,0 +1,70 @@
+&(foo) {
+	header Content-Type "application/xml"
+	respond "rejected" 403
+}
+
+localhost:9080 {
+	invoke foo
+}
+----------
+{
+	"apps": {
+		"http": {
+			"servers": {
+				"srv0": {
+					"listen": [
+						":9080"
+					],
+					"routes": [
+						{
+							"match": [
+								{
+									"host": [
+										"localhost"
+									]
+								}
+							],
+							"handle": [
+								{
+									"handler": "subroute",
+									"routes": [
+										{
+											"handle": [
+												{
+													"handler": "invoke",
+													"name": "foo"
+												}
+											]
+										}
+									]
+								}
+							],
+							"terminal": true
+						}
+					],
+					"named_routes": {
+						"foo": {
+							"handle": [
+								{
+									"handler": "headers",
+									"response": {
+										"set": {
+											"Content-Type": [
+												"application/xml"
+											]
+										}
+									}
+								},
+								{
+									"body": "rejected",
+									"handler": "static_response",
+									"status_code": 403
+								}
+							]
+						}
+					}
+				}
+			}
+		}
+	}
+}
